@@ -49,6 +49,9 @@ class Cell:
     def __str__(self):
         return "Cell({}, {})".format(self.X, self.Y)
 
+    def __neg__(self):
+        return Cell(-self.X, - self.Y)
+
     # def __index__(self):
     #     return (self.X, self.Y)
 
@@ -95,7 +98,6 @@ class Character:
     def __init__(self, loc, dir):
         self.location = loc
         self.direction = dir
-        self.dead = False
 
     @property
     def location(self):
@@ -103,8 +105,8 @@ class Character:
 
     @location.setter
     def location(self, loc):
-        # if not isinstance(loc, Cell):
-        #     raise TypeError("Character's location is not Cell")
+        if not isinstance(loc, Cell):
+            raise TypeError("Character's location is not Cell")
         self._location = loc
 
     @property
@@ -122,15 +124,7 @@ class Ghost(Character):
 
     def __init__(self, loc, dir):
         super().__init__(loc, dir)
-        self.paths = {}
         self.state = GhostState.ATTACK
-
-    def setPathForAttack(self, path):
-        self.paths[GhostState.ATTACK] = path
-
-    def move(self):
-        if len(self.paths[self.state]) != 0:
-            self.location = self.paths[self.state][0]
 
 
 class GhostState(Enum):
@@ -142,19 +136,21 @@ class GhostState(Enum):
 
 class Queue(list):
 
-    def __init__(self):
+    def __init__(self, *args):
         super().__init__()
+        self.extend(list(args))
 
     def empty(self):
         return not bool(self)
 
     def enqueue(self, value):
         self.append(value)
+        return self
 
     def dequeue(self):
         return self.pop(0)
 
-    def peak(self):
+    def peek(self):
         return self[0]
 
 

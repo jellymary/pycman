@@ -8,12 +8,13 @@ from PyQt5.QtGui import QPainter, QColor
 from PyQt5.QtCore import Qt, QTimer
 
 from modules import game
+from modules.game import TickResult
 from modules import objects as obj
 
 
 class PacmanGame(QWidget):
 
-    LEVELS_NAME = ['2.txt', '1.txt']
+    LEVEL_NAMES = ['1.txt', '2.txt']
     DELAY = 10
     PACMAN_DELAY = 7
     GHOST_DELAY = 9
@@ -32,7 +33,7 @@ class PacmanGame(QWidget):
         self.initWindow()
 
     def loadLevel(self):
-        name = self.LEVELS_NAME[self.levelIndex]
+        name = self.LEVEL_NAMES[self.levelIndex]
         self.gameLevel = game.Game(name)
         if not self.board:
             self.board = Board(self)
@@ -75,24 +76,14 @@ class PacmanGame(QWidget):
             self.gameLevel.ghostsMakeStep()
             self.ghostTimeCount = 0
         self.board.update()
-        if self.gameLevel.player.dead:
-            if self.levelIndex == 0:
-                self.close()
-            else:
-                self.levelIndex -= 1
-                self.loadLevel()
-        elif self.gameLevel.isEndGame():
-            self.levelIndex += 1
-            if self.levelIndex >= len(self.LEVELS_NAME):
-                self.close()
-            else:
-                self.loadLevel()
+        result = self.gameLevel.getTickResult()
+        self._processTickResult(result)
 
     def mousePressEvent(self, event):
         rect = self.getRectangle(event.x() - self.board.frameRect().left(),
             event.y() - self.board.frameRect().top())
-        if self.gameLevel.TELEPORTATION_TIMES_COUNT > 0 and event.button() == Qt.LeftButton and rect:
-            self.gameLevel.TELEPORTATION_TIMES_COUNT -= 1
+        if self.gameLevel.TELEPORTATION_COUNT > 0 and event.button() == Qt.LeftButton and rect:
+            self.gameLevel.TELEPORTATION_COUNT -= 1
             self.gameLevel.player.location = rect
             self.board.update()
 
@@ -103,6 +94,25 @@ class PacmanGame(QWidget):
         self.gameLevel.map[rect.X, rect.Y] == obj.CellState.WALL:
             return None
         return rect
+
+    def _processTickResult(self, result):
+        if result == TickResult.LEVEL_FAILED:
+            if self.levelIndex == 0:
+                self.close()
+            else:
+                self.levelIndex -= 1
+                self.loadLevel()
+        elif result == TickResult.LEVEL_COMPLETED:
+            self.levelIndex += 1
+            if self.levelIndex >= len(self.LEVEL_NAMES):
+                self.close()
+            else:
+                self.loadLevel()
+        elif result == TickResult.PACMAN_DIED:
+            self._displayFailMessage()
+
+    def _displayFailMessage(self):
+        print('RIP! YOU HAVE ONLY %d LIFES' % self.gameLevel.lifes)
 
 
 class Board(QFrame):
@@ -144,12 +154,12 @@ class Board(QFrame):
             obj.CellState.ENERGIZER: QColor(139, 0, 0),
             'player': QColor(255, 215, 0),
             'blinky': QColor(255, 0, 0),
-            'pinky': QColor(255, 0, 255),
-            'inky': QColor(250, 128, 114),
-            'clyde': QColor(255, 165, 0)
+            'pinky': QColor(255, 20, 147),
+            'inky': QColor(51, 51, 255),
+            'clyde': QColor(255, 153, 0)
         }
-        color = colorTable[cell]
         rectangle = self.contentsRect()
+        color = colorTable[cell]
         painter.setBrush(color)
         painter.drawRect(rectangle.left() + x, y, Board.CELL_WIDTH, rectangle.top() + Board.CELL_HEIGHT)
 

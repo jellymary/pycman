@@ -37,6 +37,62 @@ class TestObjects(unittest.TestCase):
     def testCellSumAndMul(self):
         self.assertTrue(obj.Cell(3, -2) * 2 + obj.Cell(1, 4) == obj.Cell(7, 0))
 
+    def testNegCell(self):
+        self.assertEqual(-obj.Cell(2, 4), obj.Cell(-2, -4))
+
+
+class TestMap(unittest.TestCase):
+
+    def testInitMap(self):
+        map = obj.Map()
+        self.assertEqual(map.width, 0)
+        self.assertEqual(map.height, 0)
+
+    def testMapObjects(self):
+        pass
+
+
+class TestCharacter(unittest.TestCase):
+
+    pass
+
+
+class Queue(unittest.TestCase):
+
+    def testQueue(self):
+        queue1 = obj.Queue()
+        queue2 = obj.Queue(1, 2, 3)
+        self.initQueue(queue1, queue2)
+        self.emptyQueue(queue1, queue2)
+        self.enqueueQueue(queue1, queue2)
+        self.dequeueQueue(queue1, queue2)
+        self.peekQueue(queue1, queue2)
+
+    def initQueue(self, queue1, queue2):
+        self.assertTrue(len(queue1) == 0)
+        self.assertEqual(queue2, [1, 2, 3])
+
+    def emptyQueue(self, queue1, queue2):
+        self.assertTrue(queue1.empty())
+        self.assertFalse(queue2.empty())
+
+    def enqueueQueue(self, queue1, queue2):
+        self.assertEqual(queue1.enqueue(5), [5])
+        self.assertEqual(queue2.enqueue(5), [1, 2, 3, 5])
+
+    def dequeueQueue(self, queue1, queue2):
+        self.assertEqual(queue1.dequeue(), 5)
+        self.assertTrue(queue1.empty())
+        self.assertEqual(queue2.dequeue(), 1)
+        self.assertEqual(queue2, [2, 3, 5])
+
+    def peekQueue(self, queue1, queue2):
+        queue1.enqueue(8)
+        self.assertEqual(queue1.peek(), 8)
+        self.assertFalse(queue1.empty())
+        self.assertEqual(queue2.peek(), 2)
+        self.assertFalse(queue2.empty())
+
 
 if __name__ == '__main__':
     unittest.main()
