@@ -86,9 +86,9 @@ class Map:
 class Direction(Enum):
     """Класс всевозможных направлений персонажей игры"""
 
+    LEFT = Cell(-1, 0)
     UP = Cell(0, -1)
     DOWN = Cell(0, 1)
-    LEFT = Cell(-1, 0)
     RIGHT = Cell(1, 0)
 
 

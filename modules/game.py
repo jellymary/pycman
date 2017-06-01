@@ -18,12 +18,13 @@ class Game:
         self.map = obj.Map()
         self.scores = 0
         self.lifes = Game.LIFE_COUNT
+        self.teleportations = Game.TELEPORTATION_COUNT
         self.ghosts = {}
         self.actionQueue = obj.Queue()
         self._parse(filename)
 
     def _parse(self, filename):
-        parser_table = {
+        parserTable = {
             ' ': lambda x, y: self.map.objects[x].append(obj.CellState.EMPTY),
             '#': lambda x, y: self.map.objects[x].append(obj.CellState.WALL),
             '.': lambda x, y: self.map.objects[x].append(obj.CellState.POINT),
@@ -43,8 +44,8 @@ class Game:
                     self.map.objects = [[] for i in range(self.map.width)]
                 for x in range(self.map.width):
                     symbol = string[x]
-                    if symbol in parser_table:
-                        parser_table[symbol](x, self.map.height)
+                    if symbol in parserTable:
+                        parserTable[symbol](x, self.map.height)
                     else:
                         raise SyntaxError("Found invalid symbol in file")
                 self.map.height += 1
@@ -114,6 +115,15 @@ class Game:
             return TickResult.LEVEL_COMPLETED
         return TickResult.CONTINUE
 
+    def makeTeleportation(self, x, y):
+        if 0 <= x < self.map.width and \
+           0 <= y < self.map.height and \
+           self.map[x, y] != obj.CellState.WALL and\
+           self.teleportations > 0:
+            self.player.location = obj.Cell(x, y)
+            self.teleportations -= 1
+            print('TELEPORTED! YOU HAVE ONLY %d TELEPORTATIONS' % self.teleportations)
+        
 
 class Strategy:
 
@@ -151,11 +161,11 @@ class Strategy:
         return sqrt(pow(point2.X - point1.X, 2) + pow(point2.Y - point1.Y, 2))
 
     def _getPinkyTargetLocation(player):
-        # target = player.location + player.direction.value * Strategy.PINKY_SHIFT_CELLS_COUNT
-        # if player.direction == obj.Direction.UP:
-        #     target += obj.Direction.LEFT.value * Strategy.PINKY_SHIFT_CELLS_COUNT
-        # return target
-        return player.location
+        target = player.location + player.direction.value * Strategy.PINKY_SHIFT_CELLS_COUNT
+        if player.direction == obj.Direction.UP:
+            target += obj.Direction.LEFT.value * Strategy.PINKY_SHIFT_CELLS_COUNT
+        return target
+        # return player.location
 
     def _getInkyTargetLocation(player, blinkyLoc):
         middle = player.location + 2 * player.direction.value
