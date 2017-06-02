@@ -41,7 +41,7 @@ class Cell:
 
     def __sub__(self, value):
         if isinstance(value, Cell):
-            return Cell(self.X - value.X, self.Y - value.Y)        
+            return Cell(self.X - value.X, self.Y - value.Y)
         if isinstance(value, Direction):
             return Cell(self.X - value.value.X, self.Y - value.value.Y)
         raise TypeError("Type of value is not Cell")
@@ -92,46 +92,46 @@ class Direction(Enum):
     RIGHT = Cell(1, 0)
 
 
-class Character:
+class Entity:
     """Класс персонажа игры"""
 
     def __init__(self, loc, dir):
         self.location = loc
         self.direction = dir
 
-    @property
-    def location(self):
-        return self._location
+    # @property
+    # def location(self):
+    #     return self._location
 
-    @location.setter
-    def location(self, loc):
-        if not isinstance(loc, Cell):
-            raise TypeError("Character's location is not Cell")
-        self._location = loc
+    # @location.setter
+    # def location(self, loc):
+    #     if not isinstance(loc, Cell):
+    #         raise TypeError("Entity's location is not Cell")
+    #     self._location = loc
 
-    @property
-    def direction(self):
-        return self._direction
+    # @property
+    # def direction(self):
+    #     return self._direction
 
-    @direction.setter
-    def direction(self, dir):
-        # if not isinstance(dir, Direction):
-        #     raise TypeError("Character's direction is not Direction")
-        self._direction = dir
+    # @direction.setter
+    # def direction(self, dir):
+    #     # if not isinstance(dir, Direction):
+    #     #     raise TypeError("Entity's direction is not Direction")
+    #     self._direction = dir
 
 
-class Ghost(Character):
+class Ghost(Entity):
 
     def __init__(self, loc, dir):
         super().__init__(loc, dir)
-        self.state = GhostState.ATTACK
+        self.state = GhostState.CHASE
 
 
 class GhostState(Enum):
 
-    ATTACK = 0
-    ROVE = 1
-    SCARE = 2
+    CHASE = 0
+    SCATTER = 1
+    FRIGHTENED = 2
 
 
 class Queue(list):
@@ -152,7 +152,3 @@ class Queue(list):
 
     def peek(self):
         return self[0]
-
-
-# if __name__ == '__main__':
-#     print(Cell(0, 1) * 5)

@@ -1,5 +1,6 @@
 """Модуль реализует логику игры «Pacman»"""
 
+from os import path
 from copy import deepcopy
 from math import sqrt
 from enum import Enum
@@ -11,7 +12,6 @@ class Game:
     """Класс уровня игры"""
 
     TELEPORTATION_COUNT = 3
-    GHOST_INITIAL_POSITION = []
     LIFE_COUNT = 3
 
     def __init__(self, filename):
@@ -52,16 +52,17 @@ class Game:
 
     def _setPlayerLocation(self, x, y):
         self._playerInitialLocation = obj.Cell(x, y)
-        self.player = obj.Character(obj.Cell(x, y), obj.Direction.LEFT)
+        self.player = obj.Entity(obj.Cell(x, y), obj.Direction.LEFT)
         self.map.objects[x].append(obj.CellState.EMPTY)
 
     def _setGhostLocation(self, x, y, ghostName):
-        Game.GHOST_INITIAL_POSITION.append(obj.Cell(x, y))
+        # Game.GHOST_INITIAL_POSITION.append(obj.Cell(x, y))
         self.ghosts[ghostName] = obj.Ghost(obj.Cell(x, y), obj.Direction.LEFT)
         self.map.objects[x].append(obj.CellState.EMPTY)
 
     def playerMakeStep(self):
-        if not self.actionQueue.empty() and self._canMakeStep(self.actionQueue.peek()):
+        if not self.actionQueue.empty() and \
+        self._canMakeStep(self.actionQueue.peek()):
             self._makeStep(self.actionQueue.dequeue())
         else:
             if self._canMakeStep(self.player.direction):
@@ -70,12 +71,14 @@ class Game:
                 self.actionQueue.dequeue()
 
     def _canMakeStep(self, dir):
-        location = (self.player.location + dir).loop((self.map.width, self.map.height))
+        location = (self.player.location +
+            dir).loop((self.map.width, self.map.height))
         cellState = self.map[location.X, location.Y]
         return cellState != obj.CellState.WALL
 
     def _makeStep(self, dir):
-        location = (self.player.location + dir).loop((self.map.width, self.map.height))
+        location = (self.player.location +
+            dir).loop((self.map.width, self.map.height))
         cellState = self.map[location.X, location.Y]
         self.player.location = location
         self.player.direction = dir
@@ -85,7 +88,12 @@ class Game:
 
     def ghostsMakeStep(self):
         for ghostName in self.ghosts:
-            newLocation = Strategy.getNextLocation(ghostName, self.ghosts, self.player, self.map)
+            newLocation = Strategy.getNextLocation(
+                ghostName,
+                self.ghosts,
+                self.player,
+                self.map
+            )
             self.ghosts[ghostName].direction = newLocation - self.ghosts[ghostName].location
             self.ghosts[ghostName].location = newLocation
 
@@ -97,7 +105,7 @@ class Game:
                     return False
         return True
 
-    def _isPlayerDied(self):        
+    def _isPlayerDied(self):
         for ghost in self.ghosts.values():
             if self.player.location == ghost.location:
                 return True
@@ -123,17 +131,38 @@ class Game:
             self.player.location = obj.Cell(x, y)
             self.teleportations -= 1
             print('TELEPORTED! YOU HAVE ONLY %d TELEPORTATIONS' % self.teleportations)
-        
+
+    def saveResult(self, name, score):
+        Scoreboard.save(name, score)
+
+
+class Scoreboard:
+
+    SCOREBOARD_FILE = path.join('modules', 'scores.txt')
+
+    def save(name, record):
+        scores = []
+        scores.append((name, record))
+        with open(Scoreboard.SCOREBOARD_FILE, 'r', encoding='utf-8') as file:
+            for line in file:
+                record = line.split()[1:]
+                scores.append((record[0], int(record[1])))
+        scores.sort(key=lambda x: -x[1])
+        with open(Scoreboard.SCOREBOARD_FILE, 'w', encoding='utf-8') as file:
+            index = 1
+            for score in scores:
+                file.write(str(index) + ' ' + score[0] + ' ' + str(score[1]) + '\n')
+                index += 1
+
 
 class Strategy:
-
-    PINKY_SHIFT_CELLS_COUNT = 4
 
     def getNextLocation(name, ghosts, player, map):
         targetPositions = {
             'blinky': lambda: player.location,
             'pinky': lambda: Strategy._getPinkyTargetLocation(player),
-            'inky': lambda: Strategy._getInkyTargetLocation(player, ghosts['blinky'].location),
+            'inky': lambda: Strategy._getInkyTargetLocation(player,
+                ghosts['blinky'].location),
             'clyde': lambda: Strategy._getClydeTargetLocation(ghost, player),
         }
         ghost = ghosts[name]
@@ -141,7 +170,8 @@ class Strategy:
         directions = [
             direction.value for direction in obj.Direction
                     if direction.value + ghost.direction != obj.Cell(0, 0) and \
-                        Strategy._isNotWall(map, (ghost.location + direction.value).loop((map.width, map.height)))
+                        Strategy._isNotWall(map, (ghost.location +
+                            direction.value).loop((map.width, map.height)))
         ]
         if len(directions) == 0:
             return ghost.location
@@ -161,16 +191,14 @@ class Strategy:
         return sqrt(pow(point2.X - point1.X, 2) + pow(point2.Y - point1.Y, 2))
 
     def _getPinkyTargetLocation(player):
-        target = player.location + player.direction.value * Strategy.PINKY_SHIFT_CELLS_COUNT
+        target = player.location + player.direction.value * 4
         if player.direction == obj.Direction.UP:
-            target += obj.Direction.LEFT.value * Strategy.PINKY_SHIFT_CELLS_COUNT
+            target += obj.Direction.LEFT.value * 4
         return target
-        # return player.location
 
     def _getInkyTargetLocation(player, blinkyLoc):
         middle = player.location + 2 * player.direction.value
         return 2 * middle - blinkyLoc
-        # return player.location
 
     def _getClydeTargetLocation(ghost, player):
         if Strategy._getDistance(ghost.location, player.location) < 9:
@@ -184,9 +212,3 @@ class TickResult(Enum):
     LEVEL_COMPLETED = 1
     PACMAN_DIED = 2
     LEVEL_FAILED = 3
-
-
-# if __name__ == '__main__':
-#     level0 = Level('level1.txt')
-#     loc = level0.player.location
-#     print(loc.X, loc.Y)

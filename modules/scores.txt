@@ -1,0 +1,10 @@
+1 Super 3912
+2 Cowboy 1260
+3 Pinky Pie 440
+4 pacman 310
+5 mary 200
+6 qweqwe 110
+7 Peppa 70
+8 Kitty 50
+9 Vfppe 20
+10 Qwerty 0
