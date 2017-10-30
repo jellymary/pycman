@@ -5,7 +5,7 @@ from copy import deepcopy
 from math import sqrt
 from enum import Enum
 
-from . import objects as obj
+from modules import objects as obj
 
 
 class Game:
@@ -40,7 +40,7 @@ class Game:
             for string in file:
                 if self.map.width == 0:
                     self.map.width = len(string) - 1
-                if len(self.map.objects) == 0:
+                if self.map.objectsCount() == 0:
                     self.map.objects = [[] for i in range(self.map.width)]
                 for x in range(self.map.width):
                     symbol = string[x]
@@ -72,13 +72,13 @@ class Game:
 
     def _canMakeStep(self, dir):
         location = (self.player.location +
-            dir).loop((self.map.width, self.map.height))
+            dir).cycling((self.map.width, self.map.height))
         cellState = self.map[location.X, location.Y]
         return cellState != obj.CellState.WALL
 
     def _makeStep(self, dir):
         location = (self.player.location +
-            dir).loop((self.map.width, self.map.height))
+            dir).cycling((self.map.width, self.map.height))
         cellState = self.map[location.X, location.Y]
         self.player.location = location
         self.player.direction = dir
@@ -133,7 +133,7 @@ class Game:
             print('TELEPORTED! YOU HAVE ONLY %d TELEPORTATIONS' % self.teleportations)
 
     def saveResult(self, name, score):
-        Scoreboard.save(name, score)
+        return Scoreboard.save(name, score)
 
 
 class Scoreboard:
@@ -153,6 +153,7 @@ class Scoreboard:
             for score in scores:
                 file.write(str(index) + ' ' + score[0] + ' ' + str(score[1]) + '\n')
                 index += 1
+        return scores
 
 
 class Strategy:
@@ -171,7 +172,7 @@ class Strategy:
             direction.value for direction in obj.Direction
                     if direction.value + ghost.direction != obj.Cell(0, 0) and \
                         Strategy._isNotWall(map, (ghost.location +
-                            direction.value).loop((map.width, map.height)))
+                            direction.value).cycling((map.width, map.height)))
         ]
         if len(directions) == 0:
             return ghost.location
@@ -182,7 +183,7 @@ class Strategy:
             if distance < minDistance:
                 minDistance = distance
                 minDistanceDir = direction
-        return (minDistanceDir + ghost.location).loop((map.width, map.height))
+        return (minDistanceDir + ghost.location).cycling((map.width, map.height))
 
     def _isNotWall(map, location):
         return map[location.X, location.Y] != obj.CellState.WALL

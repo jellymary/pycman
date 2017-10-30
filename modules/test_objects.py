@@ -3,6 +3,9 @@
 
 import unittest
 
+# from .. import objects as obj
+# from ... import objects
+# from ..objects import *
 import objects as obj
 
 
@@ -40,21 +43,44 @@ class TestObjects(unittest.TestCase):
     def testNegCell(self):
         self.assertEqual(-obj.Cell(2, 4), obj.Cell(-2, -4))
 
+    def testСyclingCell(self):
+        self.assertEqual(obj.Cell(2, 5).cycling((10, 10)), obj.Cell(2, 5))
+        self.assertEqual(obj.Cell(7, 12).cycling((5, 5)), obj.Cell(2, 2))
+
 
 class TestMap(unittest.TestCase):
 
     def testInitMap(self):
         map = obj.Map()
-        self.assertEqual(map.width, 0)
+        self.assertEqual(map._widht, 0)
         self.assertEqual(map.height, 0)
 
-    def testMapObjects(self):
-        pass
+    # def testMapObjects(self):
+    #     map = obj.Map()
+    #     map.objects = [
+    #         [1, 2, 3],
+    #         [4, 5, 6]
+    #     ]
+    #     self.assertEqual(map[0, 1], 2)
+    #     self.assertEqual(map._widht(), 3)
+    #     self.assertEqual(map.height(), 2)
 
 
-class TestCharacter(unittest.TestCase):
+class TestEntity(unittest.TestCase):
 
-    pass
+    def testInitEntity(self):
+        entity = obj.Entity(obj.Cell(1, 5), obj.Direction.UP)
+        self.assertEqual(entity.location, obj.Cell(1, 5))
+        self.assertEqual(entity.direction, obj.Direction.UP)
+
+
+class TestGhost(unittest.TestCase):
+
+    def testInitGhost(self):
+        ghost = obj.Ghost(obj.Cell(7, 2), obj.Direction.RIGHT)
+        self.assertEqual(ghost.location, obj.Cell(7, 2))
+        self.assertEqual(ghost.direction, obj.Direction.RIGHT)
+        self.assertEqual(ghost.state, obj.GhostState.CHASE)
 
 
 class Queue(unittest.TestCase):

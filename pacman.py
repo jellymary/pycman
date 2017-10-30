@@ -6,12 +6,12 @@ import sys
 import os
 import math
 
-from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QFrame, QGridLayout, QLabel, QInputDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QFrame, QGridLayout, QLabel, QInputDialog, QTableWidget
 from PyQt5.QtGui import QPainter, QColor, QImage, QIcon
 from PyQt5.QtCore import Qt, QTimer, QRect
 
-from modules import game
-from modules.game import TickResult
+# from modules import game
+from modules.game import Game, TickResult
 from modules import objects as obj
 
 
@@ -36,8 +36,8 @@ class PacmanGame(QWidget):
         self.initWindow()
 
     def initWindow(self):
-        self.resize(Board.CELL_WIDTH * self.gameLevel.map.width,
-            Board.CELL_HEIGHT * self.gameLevel.map.height + 50)
+        self.resize(BoardPaint.CELL_WIDTH * self.gameLevel.map.width,
+            BoardPaint.CELL_HEIGHT * self.gameLevel.map.height + 50)
         self.moveToCenter()
         self.setWindowTitle('Pacman')
         self.setWindowIcon(QIcon(os.path.join('images', 'pacman.png')))
@@ -51,9 +51,9 @@ class PacmanGame(QWidget):
 
     def loadLevel(self):
         name = os.path.join('levels', self.LEVEL_NAMES[self.levelIndex])
-        self.gameLevel = game.Game(name)
+        self.gameLevel = Game(name)
         if not self.board:
-            self.board = Board(self)
+            self.board = BoardPaint(self)
         self.board.level = self.gameLevel
         self.playerTimeCount = 0
         self.ghostTimeCount = 0
@@ -86,8 +86,8 @@ class PacmanGame(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            x = (event.x() - self.board.frameRect().left()) // Board.CELL_WIDTH
-            y = (event.y() - self.board.frameRect().top()) // Board.CELL_HEIGHT
+            x = (event.x() - self.board.frameRect().left()) // BoardPaint.CELL_WIDTH
+            y = (event.y() - self.board.frameRect().top()) // BoardPaint.CELL_HEIGHT
             self.gameLevel.makeTeleportation(x, y)
         self.board.update()
 
@@ -118,11 +118,21 @@ class PacmanGame(QWidget):
         dialog = QInputDialog()
         name, ok = dialog.getText(self, 'Сохранение результата', 'Введите своё имя:')
         if (ok and len(name) != 0):
-            self.gameLevel.saveResult(name, self.globalScores)
-        os.startfile(r'C:\Users\maryk\OneDrive\Python\task\Pacman2\modules\scores.txt')
+            scores = self.gameLevel.saveResult(name, self.globalScores)
+            self.ScoresWindow(scores)
+
+    def ScoresWindow(self, scores):
+        os.startfile(os.path.join('modules','scores.txt'))
+        # column = 3
+        # rows = len(scores)
+        # table = QTableWidget(rows, column, self)
+        # # table.setText('Таблица рекордов')
+        # table.item(0, 0).setText('0')
+        # table.setCellWidget(0, 0, QLabel('ojnjh'))
+        # table.show()
 
 
-class Board(QFrame):
+class BoardPaint(QFrame):
 
     CELL_WIDTH = 25
     CELL_HEIGHT = 25
@@ -138,13 +148,13 @@ class Board(QFrame):
     ENTITIES = {
         'player': lambda self, painter, x, y: self.drawPacman(painter, x, y),
         'blinky': lambda self, painter, x, y: self.drawGhost(painter, x, y,
-            QImage(Board.BLINKY_IMAGE)),
+            QImage(BoardPaint.BLINKY_IMAGE)),
         'pinky': lambda self, painter, x, y: self.drawGhost(painter, x, y,
-            QImage(Board.PINKY_IMAGE)),
+            QImage(BoardPaint.PINKY_IMAGE)),
         'inky': lambda self, painter, x, y: self.drawGhost(painter, x, y,
-            QImage(Board.INKY_IMAGE)),
+            QImage(BoardPaint.INKY_IMAGE)),
         'clyde': lambda self, painter, x, y: self.drawGhost(painter, x, y,
-            QImage(Board.CLYDE_IMAGE))
+            QImage(BoardPaint.CLYDE_IMAGE))
     }
 
     PACMAN_HOLE_SIZE = 90 * 16
@@ -157,50 +167,50 @@ class Board(QFrame):
     def __init__(self, parent):
         super().__init__(parent)
         self.level = parent.gameLevel
-        self.animationCounter = Board.ANIMATION_DELAY
-        self.resize(self.level.map.width * Board.CELL_WIDTH,
-            self.level.map.height * Board.CELL_HEIGHT)
+        self.animationCounter = BoardPaint.ANIMATION_DELAY
+        self.resize(self.level.map.width * BoardPaint.CELL_WIDTH,
+            self.level.map.height * BoardPaint.CELL_HEIGHT)
         # self.moveCenter()
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        self.drawBoard(painter)
-        self.drawCell(painter, self.level.player.location.X * Board.CELL_WIDTH,
-                       self.level.player.location.Y * Board.CELL_HEIGHT, 'player')
+        self.drawBoardPaint(painter)
+        self.drawCell(painter, self.level.player.location.X * BoardPaint.CELL_WIDTH,
+                       self.level.player.location.Y * BoardPaint.CELL_HEIGHT, 'player')
         for name, ghost in self.level.ghosts.items():
-            self.drawCell(painter, ghost.location.X * Board.CELL_WIDTH,
-                ghost.location.Y * Board.CELL_HEIGHT, name)
+            self.drawCell(painter, ghost.location.X * BoardPaint.CELL_WIDTH,
+                ghost.location.Y * BoardPaint.CELL_HEIGHT, name)
 
-    def drawBoard(self, painter):
+    def drawBoardPaint(self, painter):
         for y in range(self.level.map.height):
             for x in range(self.level.map.width):
                 fieldObject = self.level.map[x, y]
-                self.drawCell(painter, x * Board.CELL_WIDTH,
-                    y * Board.CELL_HEIGHT, fieldObject)
+                self.drawCell(painter, x * BoardPaint.CELL_WIDTH,
+                    y * BoardPaint.CELL_HEIGHT, fieldObject)
 
     def drawCell(self, painter, x, y, cell):
         col = QColor(212, 212, 212)
         painter.setPen(col)
         rectangle = self.contentsRect()
         if cell in obj.CellState:
-            color = Board.CELL_COLORS[cell]
+            color = BoardPaint.CELL_COLORS[cell]
             painter.setBrush(color)
             painter.drawRect(rectangle.left() + x, y,
-                Board.CELL_WIDTH, rectangle.top() + Board.CELL_HEIGHT)
+                BoardPaint.CELL_WIDTH, rectangle.top() + BoardPaint.CELL_HEIGHT)
         else:
-            color = Board.ENTITIES[cell](self, painter, rectangle.left() + x, y)
+            color = BoardPaint.ENTITIES[cell](self, painter, rectangle.left() + x, y)
 
     def drawPacman(self, painter, x, y):
         pacmanColor = QColor(255, 215, 0)
-        ellipseData = (x + 2, y + 2, Board.CELL_WIDTH - 4, Board.CELL_HEIGHT - 4)
-        backColor = Board.CELL_COLORS[obj.CellState.EMPTY]
+        ellipseData = (x + 2, y + 2, BoardPaint.CELL_WIDTH - 4, BoardPaint.CELL_HEIGHT - 4)
+        backColor = BoardPaint.CELL_COLORS[obj.CellState.EMPTY]
         painter.setPen(backColor)
         painter.setBrush(pacmanColor)
         direction = self.level.player.direction.value
         angle = math.atan2(-direction.Y, direction.X) * 180 / math.pi * 16
-        self.animationCounter = (self.animationCounter - 1) % Board.ANIMATION_DELAY
-        holeSize = Board.PACMAN_HOLE_SIZE * abs(self.animationCounter -
-            Board.ANIMATION_DELAY / 2) * 2 / Board.ANIMATION_DELAY
+        self.animationCounter = (self.animationCounter - 1) % BoardPaint.ANIMATION_DELAY
+        holeSize = BoardPaint.PACMAN_HOLE_SIZE * abs(self.animationCounter -
+            BoardPaint.ANIMATION_DELAY / 2) * 2 / BoardPaint.ANIMATION_DELAY
         painter.drawEllipse(*ellipseData)
         painter.setBrush(backColor)
         painter.drawPie(*ellipseData, angle - holeSize / 2, holeSize)
@@ -208,7 +218,7 @@ class Board(QFrame):
         painter.drawArc(*ellipseData, angle + holeSize / 2, 360 * 16 - holeSize - 16)
 
     def drawGhost(self, painter, x, y, image):
-        painter.drawImage(QRect(x, y, Board.CELL_WIDTH, Board.CELL_HEIGHT), image)
+        painter.drawImage(QRect(x, y, BoardPaint.CELL_WIDTH, BoardPaint.CELL_HEIGHT), image)
 
 
 if __name__ == '__main__':

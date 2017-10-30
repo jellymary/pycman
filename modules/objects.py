@@ -10,7 +10,7 @@ class Cell:
         self.X = x
         self.Y = y
 
-    def loop(self, size):
+    def cycling(self, size):
         width, height = size
         self.X = (self.X + width) % width
         self.Y = (self.Y + height) % height
@@ -82,6 +82,18 @@ class Map:
         x, y = point
         self.objects[x][y] = value
 
+    def getwidth(self):
+        return 0 if self.height == 1 else len(self.objects[0])
+
+    def getheight(self):
+        return len(self.objects)
+
+    def __len__(self):
+        return len(self.objects)
+
+    def objectsCount(self):
+        return len(self)
+
 
 class Direction(Enum):
     """Класс всевозможных направлений персонажей игры"""
@@ -98,26 +110,6 @@ class Entity:
     def __init__(self, loc, dir):
         self.location = loc
         self.direction = dir
-
-    # @property
-    # def location(self):
-    #     return self._location
-
-    # @location.setter
-    # def location(self, loc):
-    #     if not isinstance(loc, Cell):
-    #         raise TypeError("Entity's location is not Cell")
-    #     self._location = loc
-
-    # @property
-    # def direction(self):
-    #     return self._direction
-
-    # @direction.setter
-    # def direction(self, dir):
-    #     # if not isinstance(dir, Direction):
-    #     #     raise TypeError("Entity's direction is not Direction")
-    #     self._direction = dir
 
 
 class Ghost(Entity):
